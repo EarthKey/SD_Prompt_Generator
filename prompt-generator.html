@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SD Prompt Generator Pro (Custom Batch)</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --card-bg: #1a1d24;
+            --text-main: #e0e6ed;
+            --text-sub: #94a3b8;
+            --accent-start: #6366f1;
+            --accent-end: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+            --border-color: #2d3748;
+            --hover-border: #4f46e5;
+            --glass-bg: rgba(26, 29, 36, 0.85);
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.2);
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-md);
+            flex-wrap: wrap;
+            /* Allow wrapping on small screens */
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Custom Checkbox for Header */
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        input[type="checkbox"] {
+            accent-color: var(--accent-start);
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .btn-danger:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        /* --- Main Content --- */
+        main {
+            flex: 1;
+            padding: 2rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        @media (min-width: 1600px) {
+            .grid-container {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1rem;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 1.25rem;
+            }
+
+            .header-controls {
+                justify-content: center;
+            }
+        }
+
+        /* --- Slot Card --- */
+        .slot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            position: relative;
+        }
+
+        .slot-card.active {
+            border-color: var(--accent-start);
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+        }
+
+        .slot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slot-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .slot-number {
+            background: #334155;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .input-group {
+            position: relative;
+            flex: 1;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: #0f1115;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.6rem;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-start);
+        }
+
+        .slot-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.4rem;
+        }
+
+        .btn-small {
+            padding: 0.4rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-del {
+            background: #451a1a;
+            color: #fca5a5;
+        }
+
+        .btn-del:hover {
+            background: #7f1d1d;
+        }
+
+        /* --- Footer --- */
+        footer {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            bottom: 0;
+            z-index: 90;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .prompt-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            background: #0f1115;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #a5b4fc;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            resize: none;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-gradient);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>SD Prompt Generator Pro <span style="font-size:0.7em; opacity:0.8; font-weight:400;">(Custom Batch)</span>
+        </h1>
+        <div class="header-controls">
+            <div class="checkbox-wrapper" title="Toggle all checkboxes">
+                <input type="checkbox" id="check-all" checked>
+                <label for="check-all">全選択/解除</label>
+            </div>
+            <button class="btn-primary" id="btn-random-selected">
+                🎲 選択項目をランダム生成
+            </button>
+            <button class="btn-danger" id="btn-reset-all">
+                🗑️ 全リセット
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div id="slots-grid" class="grid-container">
+            <!-- JS will populate this -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="prompt-container">
+            <div class="prompt-header">
+                <span>Generated Prompt</span>
+                <button class="btn-primary" id="btn-copy-all">📋 一括コピー</button>
+            </div>
+            <textarea id="final-prompt" readonly></textarea>
+        </div>
+    </footer>
+
+    <div id="toast" class="toast">Copied to clipboard! 📋</div>
+
+    <script>
+        // --- DATA ---
+        const PROMPT_PREFIX = "(masterpiece, best quality, absurdres, highres:1.2),";
+
+        const slotConfig = [
+            { key: "style", label: "画風 (Style)", icon: "🎨" },
+            { key: "emotion", label: "表情 (Expression)", icon: "😊" },
+            { key: "eye_shape", label: "目の形 (Eye Shape)", icon: "👁️" },
+            { key: "eye_color", label: "目の色 (Eye Color)", icon: "🌈" },
+            { key: "gaze", label: "視線 (Gaze)", icon: "👀" },
+            { key: "hair_style", label: "髪型 (Hair Style)", icon: "💇‍♀️" },
+            { key: "hair_color", label: "髪色 (Hair Color)", icon: "💈" },
+            { key: "manga", label: "漫符 (Symbols)", icon: "💢" },
+            { key: "pose_base", label: "基本姿勢 (Pose)", icon: "🧘" },
+            { key: "action", label: "腕の動作 (Action)", icon: "💪" },
+            { key: "outfit_top", label: "トップス (Tops)", icon: "👕" },
+            { key: "outfit_bottom", label: "ボトムス (Bottoms)", icon: "👖" },
+            { key: "outer_acc", label: "アウター/小物 (Acc)", icon: "🎒" },
+            { key: "leg_shoes", label: "足元 (Shoes)", icon: "👟" },
+            { key: "location", label: "場所・照明 (Loc/Light)", icon: "💡" },
+            { key: "nsfw", label: "NSFW (Option)", icon: "🔞" }
+        ];
+
+        const promptData = {
+            // 1. 画風 (Style)
+            style: {
+                "アニメスクリーンキャプチャ": "anime_screencap",
+                "リアル (現実的)": "realistic",
+                "フォトリアル (写真調)": "photorealistic",
+                "マンガ風": "manga style",
+                "水彩画風": "watercolor painting",
+                "夢のような水彩": "dreamy watercolor",
+                "油絵風": "oil painting",
+                "厚塗り": "thick coating",
+                "インク画/水墨画": "ink drawing, ink painting",
+                "鉛筆画/スケッチ": "pencil drawing, sketch style",
+                "線画 (ラインアート)": "line art",
+                "チョーク画": "chalk",
+                "パステル画": "pastel painting",
+                "浮世絵風": "ukiyo-e",
+                "日本画風": "nihonga",
+                "ポップアート": "pop art",
+                "ピクセルアート (ドット絵)": "pixel art",
+                "レトロアニメ風 (90年代)": "1990s (style), retro style",
+                "フラットカラー": "flat color",
+                "シルエット画": "silhouette style",
+                "なし": ""
+            },
+            // 2. 表情 (Expression)
+            emotion: {
+                "笑顔": "smile",
+                "赤面/照れ": "blush",
+                "怒り": "angry",
+                "泣き顔": "crying",
+                "驚き": "surprised",
+                "ドヤ顔": "smug",
+                "ジト目表情": "jitome, annoyed",
+                "色気のある目": "bedroom eyes",
+                "なし": ""
+            },
+            // 3. 目の形 (Eye Shape)
+            eye_shape: {
+                "つり目": "tsurime, slant eyes",
+                "たれ目": "tareme, droopy eyes",
+                "ジト目": "jitome",
+                "三白眼": "sanpaku",
+                "ハート瞳": "heart-shaped pupils",
+                "星瞳": "star-shaped pupils",
+                "しいたけ目": "sparkling eyes",
+                "ぐるぐる目": "spiral eyes",
+                "ハイライトなし": "no highlights, lifeless eyes",
+                "なし": ""
+            },
+            // 4. 目の色 (Eye Color)
+            eye_color: {
+                "青眼": "blue eyes",
+                "赤眼": "red eyes",
+                "緑眼": "green eyes",
+                "金眼": "gold eyes",
+                "銀眼": "silver eyes",
+                "紫眼": "purple eyes",
+                "オッドアイ": "heterochromia",
+                "なし": ""
+            },
+            // 5. 視線 (Gaze)
+            gaze: {
+                "カメラ目線": "looking at viewer",
+                "よそ見": "looking away",
+                "見上げる": "looking up",
+                "上目遣い": "upturned eyes",
+                "見下ろす": "looking down",
+                "チラ見": "sideways glance",
+                "スマホを見る": "looking at phone",
+                "なし": ""
+            },
+            // 6. 髪型 (Hair Style)
+            hair_style: {
+                "ショート": "short hair",
+                "ロング": "long hair",
+                "ボブ": "bob cut",
+                "ポニーテール": "ponytail",
+                "ツインテール": "twintails",
+                "サイドテール": "side ponytail",
+                "ツーサイドアップ": "two side up",
+                "三つ編み": "braid",
+                "お団子": "hair bun",
+                "姫カット": "hime cut",
+                "ぱっつん前髪": "blunt bangs",
+                "メカクレ": "hair over eyes",
+                "アホ毛": "ahoge",
+                "なし": ""
+            },
+            // 7. 髪色 (Hair Color)
+            hair_color: {
+                "黒髪": "black hair",
+                "銀髪/白髪": "silver hair, white hair",
+                "金髪": "blonde hair",
+                "茶髪": "brown hair",
+                "青髪": "blue hair",
+                "赤髪": "red hair",
+                "ピンク髪": "pink hair",
+                "インナーカラー": "multicolored hair, streaked hair",
+                "なし": ""
+            },
+            // 8. 漫符 (Manga Symbols)
+            manga: {
+                "笑み線 (+++)": "+++, laughing",
+                "驚き (^^^)": "^^^, surprised",
+                "気付き線": "notice lines",
+                "怒筋": "anger vein",
+                "キラキラ": "sparkling aura",
+                "もじゃもじゃ": "squiggle",
+                "青ざめる": "turn pale",
+                "冷や汗": "nervous sweating",
+                "音符 (♪)": "musical note",
+                "閃き (電球)": "light bulb",
+                "なし": ""
+            },
+            // 9. 基本姿勢 (Pose Base)
+            pose_base: {
+                "立ち姿": "standing",
+                "座る": "sitting",
+                "しゃがむ": "squatting",
+                "仰向け": "lying, on back",
+                "うつ伏せ": "lying, on stomach",
+                "四つん這い": "all fours",
+                "膝立ち": "kneeling",
+                "正座": "seiza",
+                "割座 (W字)": "wariza",
+                "体育座り": "hugging own legs",
+                "なし": ""
+            },
+            // 10. 腕の動作 (Action)
+            action: {
+                "ピース": "v sign",
+                "指ハート": "finger heart",
+                "ハートを作る": "heart hands",
+                "敬礼": "salute",
+                "シーッ (内緒)": "shushing",
+                "招き猫ポーズ": "paw pose",
+                "ガオーポーズ": "claw pose",
+                "髪をかき上げる": "hair flip",
+                "頬杖": "head rest",
+                "スカート持ち上げ": "lift skirt",
+                "なし": ""
+            },
+            // 11. トップス (Outfit Top)
+            outfit_top: {
+                "セーラー服": "sailor collar",
+                "ブレザー": "blazer",
+                "パーカー": "hoodie",
+                "Tシャツ": "t-shirt",
+                "シャツ": "shirt",
+                "オフショル": "off-shoulder",
+                "キャミソール": "camisole",
+                "メイド服": "maid",
+                "ビキニ": "bikini",
+                "着物": "kimono",
+                "ドレス": "dress",
+                "なし": ""
+            },
+            // 12. ボトムス (Outfit Bottom)
+            outfit_bottom: {
+                "プリーツスカート": "pleated skirt",
+                "ミニスカート": "miniskirt",
+                "ロングスカート": "long skirt",
+                "ショートパンツ": "shorts",
+                "ジーンズ/デニム": "jeans",
+                "スラックス": "slacks",
+                "なし": ""
+            },
+            // 13. アウター/小物 (Outer/Acc)
+            outer_acc: {
+                "ジャケット": "jacket",
+                "コート": "coat",
+                "カーディガン": "cardigan",
+                "帽子": "hat",
+                "眼鏡": "glasses",
+                "チョーカー": "choker",
+                "リボン": "ribbon",
+                "なし": ""
+            },
+            // 14. 足元 (Legwear/Shoes)
+            leg_shoes: {
+                "ニーソックス": "thighhighs",
+                "パンスト": "pantyhose",
+                "ハイソックス": "high socks",
+                "ルーズソックス": "loose socks",
+                "スニーカー": "sneakers",
+                "ローファー": "loafers",
+                "ブーツ": "boots",
+                "サンダル": "sandals",
+                "なし": ""
+            },
+            // 15. 場所・光 (Location/Lighting)
+            location: {
+                "教室": "classroom",
+                "寝室": "bedroom, luxury bedroom",
+                "ビーチ/海": "beach, ocean",
+                "街中": "city street",
+                "森/自然": "forest",
+                "ゴールデンアワー": "golden hour, sunset",
+                "逆光": "backlight",
+                "光の粒子": "light particles",
+                "なし": ""
+            },
+            // 16. NSFW (Option)
+            nsfw: {
+                "全裸": "nude",
+                "下着姿": "underwear, lingerie",
+                "正常位": "missionary",
+                "騎乗位": "cowgirl position",
+                "後背位 (バック)": "doggystyle",
+                "立ちバック": "standing from behind",
+                "対面座位": "upright straddle",
+                "パイズリ": "paizuri",
+                "中出し": "creampie",
+                "なし": ""
+            }
+        };
+
+        // --- DOM ---
+        const slotsGrid = document.getElementById('slots-grid');
+        const finalPromptParams = document.getElementById('final-prompt');
+        const toast = document.getElementById('toast');
+        const checkAll = document.getElementById('check-all');
+        const btnRandomSelected = document.getElementById('btn-random-selected');
+        const btnResetAll = document.getElementById('btn-reset-all');
+        const btnCopyAll = document.getElementById('btn-copy-all');
+
+        // --- CORE LOGIC ---
+        function initApp() {
+            let index = 1;
+            slotConfig.forEach(cfg => {
+                const key = cfg.key;
+                const data = promptData[key];
+
+                // Datalist options
+                const optionsHTML = Object.keys(data).map(opt => `<option value="${opt}">`).join('');
+
+                const html = `
+                <div class="slot-card" id="card-${key}">
+                    <div class="slot-header">
+                        <label class="slot-label">
+                            <input type="checkbox" class="slot-check" id="check-${key}" data-key="${key}" checked>
+                            <span class="slot-number">${index}</span>
+                            ${cfg.icon} ${cfg.label}
+                        </label>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="text" list="list-${key}" id="input-${key}" data-key="${key}" placeholder="未設定 (なし)" autocomplete="off">
+                        <datalist id="list-${key}">${optionsHTML}</datalist>
+                    </div>
+
+                    <div class="slot-controls">
+                        <button class="btn-small btn-secondary" onclick="randomizeSlot('${key}')" title="Randomize this slot">🎲 個別</button>
+                        <button class="btn-small btn-del" onclick="clearSlot('${key}')" title="Clear this slot">❌ 解除</button>
+                        <button class="btn-small btn-secondary" onclick="copySlot('${key}')" title="Copy this slot value">📋 Copy</button>
+                    </div>
+                </div>
+                `;
+                slotsGrid.insertAdjacentHTML('beforeend', html);
+
+                // Event Listeners
+                const input = document.getElementById(`input-${key}`);
+                input.addEventListener('input', updatePrompt);
+
+                // Highlight active card when checked
+                const chk = document.getElementById(`check-${key}`);
+                chk.addEventListener('change', (e) => {
+                    const card = document.getElementById(`card-${key}`);
+                    if (e.target.checked) card.classList.add('active');
+                    else card.classList.remove('active');
+                });
+                // Init active state
+                document.getElementById(`card-${key}`).classList.add('active');
+
+                index++;
+            });
+
+            updatePrompt();
+        }
+
+        function updatePrompt() {
+            const parts = [PROMPT_PREFIX];
+
+            slotConfig.forEach(cfg => {
+                const key = cfg.key;
+                const input = document.getElementById(`input-${key}`);
+                const val = input.value.trim();
+
+                if (val && val !== "なし") {
+                    // Try Mapping
+                    const mapped = promptData[key][val];
+                    if (mapped !== undefined) {
+                        if (mapped !== "") parts.push(mapped);
+                    } else {
+                        // Custom Input
+                        parts.push(val);
+                    }
+                }
+            });
+
+            finalPromptParams.value = parts.join(' ');
+        }
+
+        // --- ACTIONS ---
+        function getRandomValue(key) {
+            const data = promptData[key];
+            const keys = Object.keys(data).filter(k => k !== "なし");
+            const rKey = keys[Math.floor(Math.random() * keys.length)];
+            return rKey;
+        }
+
+        window.randomizeSlot = function (key) {
+            const input = document.getElementById(`input-${key}`);
+            input.value = getRandomValue(key);
+            updatePrompt();
+        };
+
+        window.clearSlot = function (key) {
+            const input = document.getElementById(`input-${key}`);
+            input.value = "";
+            updatePrompt();
+        };
+
+        window.copySlot = function (key) {
+            const input = document.getElementById(`input-${key}`);
+            const val = input.value.trim();
+            if (!val || val === "なし") return;
+            const mapped = promptData[key][val];
+            const text = (mapped !== undefined) ? mapped : val;
+            if (text) copyToClipboard(text);
+        };
+
+        // Header Controls
+        checkAll.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            document.querySelectorAll('.slot-check').forEach(chk => {
+                chk.checked = isChecked;
+                // update visual
+                const card = document.getElementById(`card-${chk.dataset.key}`);
+                if (isChecked) card.classList.add('active');
+                else card.classList.remove('active');
+            });
+        });
+
+        btnRandomSelected.addEventListener('click', () => {
+            // Only randomize checked slots
+            document.querySelectorAll('.slot-check').forEach(chk => {
+                if (chk.checked) {
+                    const key = chk.dataset.key;
+                    const input = document.getElementById(`input-${key}`);
+                    // Note: If you want to randomize even if it has a value, we just overwrite.
+                    input.value = getRandomValue(key);
+                }
+            });
+            updatePrompt();
+        });
+
+        btnResetAll.addEventListener('click', () => {
+            document.querySelectorAll('input[type="text"]').forEach(input => input.value = "");
+            updatePrompt();
+        });
+
+        btnCopyAll.addEventListener('click', () => {
+            copyToClipboard(finalPromptParams.value);
+        });
+
+        // --- UTILS ---
+        function copyToClipboard(text) {
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+            }).catch(() => {
+                // fallback
+                const ta = document.createElement("textarea");
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                document.body.removeChild(ta);
+                showToast();
+            });
+        }
+
+        function showToast() {
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // Init
+        initApp();
+
+    </script>
+</body>
+
+</html>
